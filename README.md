@@ -5,15 +5,13 @@
 ![Security](https://img.shields.io/badge/Security-DevSecOps-green?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)
 
-An enterprise-grade Infrastructure as Code (IaC) implementation designed to automatically provision, configure, and tear down a multi-tier AWS cloud ecosystem without manual console intervention.
+An enterprise-grade Infrastructure as Code (IaC) project created and implemented to automatically provision, configure, and tear down a multi-tier AWS cloud ecosystem without manual console intervention.
 
 ---
 
 ## 📐 Architecture Overview
 
----
-
-┌────────────────────────────────────────────────────────┐
+                      ┌────────────────────────────────────────────────────────┐
                       │                      AWS CLOUD                         │
                       │                                                        │
                       │  ┌──────────────────────────────────────────────────┐  │
@@ -41,7 +39,7 @@ Internet ──[IGW]────────┼──┼──►│   [EC2 Inst
 
 ---
 
-## ⚡ Core Components
+## ⚡ Core Components Implemented
 
 * **VPC Networking**: Custom VPC equipped with Internet Gateway (IGW) and explicit Route Tables for public subnet routing.
 * **Compute Tier**: Amazon Linux 2023 EC2 Instance pre-configured with Apache Web Server via automated shell bootstrapping (`user_data`).
@@ -61,10 +59,10 @@ Internet ──[IGW]────────┼──┼──►│   [EC2 Inst
 ├── terraform.tfvars  # Local credentials file (Protected & Git-Ignored)
 └── .gitignore       # Excludes sensitive files and local state artifacts
 
----
+
 
 📑 Declarative Code Blueprint
-
+Terraform
 variable "aws_region" {
   default     = "ap-south-1"
   type        = string
@@ -76,6 +74,8 @@ variable "db_password" {
   type        = string
   sensitive   = true
 }
+
+---
 
 output "ec2_public_ip" {
   description = "Public IP Address assigned to Web Server"
@@ -91,6 +91,8 @@ output "rds_endpoint" {
   description = "Fully Qualified Domain Name (FQDN) for MySQL Connection"
   value       = aws_db_instance.default.endpoint
 }
+
+---
 
 terraform {
   required_providers {
@@ -266,7 +268,7 @@ resource "aws_db_instance" "default" {
 
 ---
 
-🛠 Deployment Lifecycle
+🛠 Deployment Lifecycle Commands
 
 1.Initialize Working Directory
 terraform init — Downloads and installs the HashiCorp AWS provider dependencies.
@@ -285,10 +287,9 @@ terraform destroy — Safely eliminates all created cloud infrastructure to prev
 
 ---
 
-🛡️ Security Best Practices Implemented
+🔒 DevSecOps & Security Best Practices
+1.Credentials Isolation: All sensitive credentials (terraform.tfvars) and state files (*.tfstate) are excluded from version control using strict .gitignore rules.
 
-Secrets Isolation: Passwords and keys stored in terraform.tfvars excluded from Git version control via .gitignore.
+2.Network Segmentation: RDS MySQL databases reside entirely within isolated Private Subnets with zero public exposure.
 
-Least Privilege Access: Database accessibility limited specifically to the Web Server's Security Group.
-
-Isolated Subnets: RDS instances deployed inside Private Subnets with no direct public internet exposure.
+3.Least-Privilege Security Rules: Database port 3306 accepts connections solely from authorized Web Server Security Groups.
