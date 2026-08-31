@@ -1,279 +1,131 @@
-# 🏗️ AWS Automated Infrastructure Provisioning with Terraform (IaC)
+# 🏗️ Production-Grade AWS VPC & EC2 Deployment via Terraform (IaC)
 
-![Terraform](https://img.shields.io/badge/Terraform-v1.5+-844FBA?style=for-the-badge&logo=terraform&logoColor=white)
+![Terraform](https://img.shields.io/badge/Terraform-1.5%2B-623CE4?style=for-the-badge&logo=terraform&logoColor=white)
 ![AWS](https://img.shields.io/badge/AWS-Cloud-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white)
-![Security](https://img.shields.io/badge/Security-DevSecOps-green?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)
+![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04%20LTS-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
+![Nginx](https://img.shields.io/badge/Nginx-Web%20Server-009639?style=for-the-badge&logo=nginx&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-An enterprise-grade Infrastructure as Code (IaC) project created and implemented to automatically provision, configure, and tear down a multi-tier AWS cloud ecosystem without manual console intervention.
+An enterprise-ready **Infrastructure as Code (IaC)** project powered by **Terraform** to design, provision, and maintain a fully customized, secure, and isolated **Virtual Private Cloud (VPC)** ecosystem on AWS.
 
----
-
-## 📐 Architecture & Infrastructure Overview
-
-| Layer | AWS Component | Configuration Details | Security & Access |
-| :--- | :--- | :--- | :--- |
-| **Network** | Custom VPC | `10.0.0.0/16` CIDR Block | Internet Gateway & Custom Route Tables |
-| **Public Subnet** | Compute Subnet | `10.0.1.0/24` (AZ-a) | Public IP enabled for Web Access |
-| **Private Subnet 1** | Database Subnet A | `10.0.2.0/24` (AZ-a) | Isolated Network (No direct IGW access) |
-| **Private Subnet 2** | Database Subnet B | `10.0.3.0/24` (AZ-b) | High-Availability Subnet Group setup |
-| **Compute Tier** | AWS EC2 Instance | Amazon Linux 2023 (`t2.micro`) | Inbound HTTP (80) & SSH (22) Access |
-| **Database Tier** | AWS RDS Instance | MySQL 8.0 Engine (`db.t3.micro`) | Restricted exclusively to Web Server SG |
-| **Storage Tier** | AWS S3 Bucket | Dynamic Prefix Naming Strategy | Object Storage for Deployment Artifacts |
+The pipeline automatically provisions network topologies (Subnets, Route Tables, Internet Gateways), configures stateful firewall security policies, and bootstraps a dynamic **Nginx Web Server** on a compute node upon execution.
 
 ---
 
-## ⚡ Core Highlights Implemented
+## 🌐 Live Infrastructure Endpoint & Public IP
 
-* **VPC Networking**: Custom VPC equipped with Internet Gateway (IGW) and explicit Route Tables for public subnet routing.
-* **Compute Provisioning**: Amazon Linux 2023 EC2 Instance pre-configured with Apache Web Server via automated shell bootstrapping (`user_data`).
-* **Multi-AZ Database**: AWS RDS MySQL instance deployed in high-availability across multiple Availability Zones using `aws_db_subnet_group`.
-* **Dynamic Storage**: AWS S3 Bucket created with dynamic prefixing to prevent global naming conflicts.
-* **DevSecOps Security**: Strict Security Group isolation ensuring database port 3306 is reachable only via the Web Tier SG.
+| Deployment Attribute | Configuration & Runtime Metadata |
+| :--- | :--- |
+| **Server Public IP Address** | `44.220.190.225` |
+| **Live Application Endpoint** | [http://44.220.190.225](http://44.220.190.225) |
+| **AWS Cloud Region** | `us-east-1` (N. Virginia) |
+| **Compute Stack** | Ubuntu Server 22.04 LTS (`amd64`) |
+| **Web Service Engine**| Nginx HTTP Server (Port 80) |
+| **Deployment Status** | 🟢 **ACTIVE & LIVE** |
 
 ---
 
-## 📂 Project Structure
+## 🏛️ System Architecture Topology
 
 ```text
+                        [ AWS Cloud (us-east-1) ]
+                                   │
+                           ┌───────┴───────┐
+                           │   Custom VPC  │
+                           │  10.0.0.0/16  │
+                           └───────┬───────┘
+                                   │
+                         [ Internet Gateway ]
+                                   │
+                       ┌───────────┴───────────┐
+                       │ Custom Route Table    │ (0.0.0.0/0)
+                       └───────────┬───────────┘
+                                   │
+                        ┌──────────┴──────────┐
+                        │    Public Subnet    │
+                        │     10.0.1.0/24     │
+                        └──────────┬──────────┘
+                                   │
+                      ┌────────────┴────────────┐
+                      │  Security Group (SG)   │
+                      │ Inbound: HTTP(80), SSH │
+                      └────────────┬────────────┘
+                                   │
+                      ┌────────────┴────────────┐
+                      │   EC2 Compute Instance  │
+                      │  IP: 44.220.190.225     │
+                      │  (Ubuntu 22.04 + Nginx) │
+                      └─────────────────────────┘
+
+⚡ Key Infrastructure Specifications
+
+Isolated Custom Network: Built with custom VPC segmentation (10.0.0.0/16) away from default AWS networks.
+
+Auto-Routing Infrastructure: Internet Gateway (IGW) attached with route table associations for seamless outbound communication.
+
+Dynamic Public IP Output: Outputs runtime IP 44.220.190.225 directly via outputs.tf for deployment verification.
+
+Dynamic AMI Sourcing: Uses dynamic HCL data queries (data.aws_ami.ubuntu) to automatically pull the newest Canonical LTS image containing the latest kernel security patches.
+
+Automated Bootstrapping: Zero-touch web server installation using advanced Shell scripts passed into EC2 user_data.
+
+Modular Code Structure: Standardized separation of concerns using decoupled main.tf, variables.tf, and outputs.tf configs.
+
+📁 Repository Organization
+
+Plaintext
 .
-├── main.tf          # Core infrastructure declaration logic
-├── variables.tf     # Configurable environment input parameters
-├── outputs.tf       # Structured infrastructure execution outputs
-├── terraform.tfvars  # Local credentials file (Protected & Git-Ignored)
-└── .gitignore       # Excludes sensitive files and local state artifacts
+├── main.tf              # Primary HCL resources (VPC, Subnets, IGW, Route Tables, SG, EC2)
+├── variables.tf         # Declarative variable definitions and strict type constraints
+├── outputs.tf           # Exported runtime parameters (EC2 Public IP address, IDs)
+├── terraform.tfvars     # Local environment runtime variable overrides (Git-ignored)
+├── .gitignore           # Prevents committing .tfstate, provider caches, and secrets
+└── README.md            # Enterprise project architecture and operational guide
 
----
+🛡️ DevSecOps & Security Controls
 
-📑 Declarative Code Blueprint
+State Isolation: .tfstate and .tfstate.backup files are strictly excluded from source control to avoid state drift issues and credential exposure.
 
-variable "aws_region" {
-  default     = "ap-south-1"
-  type        = string
-  description = "Target AWS Deployment Region"
-}
+Network Perimeter Security: Ingress security group policies enforce strict port isolation—blocking all non-essential application protocols.
 
-variable "db_password" {
-  description = "Master administrative password for MySQL Database"
-  type        = string
-  sensitive   = true
-}
-Terraform
-output "ec2_public_ip" {
-  description = "Public IP Address assigned to Web Server"
-  value       = aws_instance.web_server.public_ip
-}
+Secret Hygiene: Zero hardcoded credential policies followed; AWS authentication managed cleanly through environment variables or AWS CLI setup.
 
-output "s3_bucket_name" {
-  description = "Globally unique identifier of S3 Storage Bucket"
-  value       = aws_s3_bucket.my_bucket.id
-}
+🚀 Execution & Operational Playbook
 
-output "rds_endpoint" {
-  description = "Fully Qualified Domain Name (FQDN) for MySQL Connection"
-  value       = aws_db_instance.default.endpoint
-}
+Prerequisites
+Terraform CLI: v1.0.0+ installed.
 
----
+AWS CLI: v2.x authenticated (aws configure).
 
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
+Step-by-Step Deployment Guide
+Clone the Repository:
 
-provider "aws" {
-  region = var.aws_region
-}
+Bash
+git clone [https://github.com/vamsijohn/terraform-aws-iac-project.git](https://github.com/vamsijohn/terraform-aws-iac-project.git)
+cd terraform-aws-iac-project
+Initialize Terraform Modules & Providers:
 
-# 1. Virtual Private Cloud
-resource "aws_vpc" "main_vpc" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = true
-
-  tags = {
-    Name = "MyProject-VPC"
-  }
-}
-
-# 2. Internet Gateway
-resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.main_vpc.id
-
-  tags = {
-    Name = "MyProject-IGW"
-  }
-}
-
-# 3. Public Subnet
-resource "aws_subnet" "public_subnet" {
-  vpc_id                  = aws_vpc.main_vpc.id
-  cidr_block              = "10.0.1.0/24"
-  map_public_ip_on_launch = true
-  availability_zone       = "${var.aws_region}a"
-
-  tags = {
-    Name = "MyProject-Public-Subnet"
-  }
-}
-
-# 4. Private Subnet 1 (AZ-A)
-resource "aws_subnet" "private_subnet_1" {
-  vpc_id            = aws_vpc.main_vpc.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "${var.aws_region}a"
-
-  tags = {
-    Name = "MyProject-Private-Subnet-1"
-  }
-}
-
-# 5. Private Subnet 2 (AZ-B for RDS HA Requirements)
-resource "aws_subnet" "private_subnet_2" {
-  vpc_id            = aws_vpc.main_vpc.id
-  cidr_block        = "10.0.3.0/24"
-  availability_zone = "${var.aws_region}b"
-
-  tags = {
-    Name = "MyProject-Private-Subnet-2"
-  }
-}
-
-# 6. Route Tables & Associations
-resource "aws_route_table" "public_rt" {
-  vpc_id = aws_vpc.main_vpc.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
-  }
-
-  tags = {
-    Name = "MyProject-Public-RT"
-  }
-}
-
-resource "aws_route_table_association" "public_assoc" {
-  subnet_id      = aws_subnet.public_subnet.id
-  route_table_id = aws_route_table.public_rt.id
-}
-
-# 7. Compute Layer Security Group
-resource "aws_security_group" "web_sg" {
-  name        = "web-server-sg"
-  description = "Allow Inbound HTTP and SSH Access"
-  vpc_id      = aws_vpc.main_vpc.id
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-# 8. EC2 Web Instance
-resource "aws_instance" "web_server" {
-  ami                    = "ami-0e1d0632543a65000"
-  instance_type          = "t2.micro"
-  subnet_id              = aws_subnet.public_subnet.id
-  vpc_security_group_ids = [aws_security_group.web_sg.id]
-
-  user_data = <<-EOF
-              #!/bin/bash
-              yum update -y
-              yum install -y httpd
-              systemctl start httpd
-              systemctl enable httpd
-              echo "<h1>Deployed via Terraform IaC Project!</h1>" > /var/www/html/index.html
-              EOF
-
-  tags = {
-    Name = "MyProject-WebServer"
-  }
-}
-
-# 9. S3 Storage
-resource "aws_s3_bucket" "my_bucket" {
-  bucket_prefix = "my-iac-project-bucket-"
-}
-
-# 10. Database Subnet Group & Security Group
-resource "aws_db_subnet_group" "db_subnet_group" {
-  name       = "main-db-subnet-group"
-  subnet_ids = [aws_subnet.private_subnet_1.id, aws_subnet.private_subnet_2.id]
-}
-
-resource "aws_security_group" "db_sg" {
-  name   = "db-sg"
-  vpc_id = aws_vpc.main_vpc.id
-
-  ingress {
-    from_port       = 3306
-    to_port         = 3306
-    protocol        = "tcp"
-    security_groups = [aws_security_group.web_sg.id]
-  }
-}
-
-# 11. Database Instance
-resource "aws_db_instance" "default" {
-  allocated_storage    = 10
-  db_name              = "mydb"
-  engine               = "mysql"
-  engine_version       = "8.0"
-  instance_class       = "db.t3.micro"
-  username             = "admin"
-  password             = var.db_password
-  parameter_group_name = "default.mysql8.0"
-  skip_final_snapshot  = true
-  db_subnet_group_name = aws_db_subnet_group.db_subnet_group.id
-  vpc_security_group_ids = [aws_security_group.db_sg.id]
-}
-
----
-
-🛠 Deployment Lifecycle Commands
-
-# 1. Initialize Working Directory
+Bash
 terraform init
+Validate Code Formats & Syntax:
 
-# 2. Syntactical Validation & Formatting
+Bash
 terraform validate
-terraform fmt
+Generate Execution Dry-Run Plan:
 
-# 3. Execution Plan Preview
+Bash
 terraform plan
+Apply Provisioning Target:
 
-# 4. Automated Provisioning
+Bash
 terraform apply -auto-approve
+Tear Down Infrastructure (Post-Testing):
 
-# 5. Infrastructure Teardown
+Bash
 terraform destroy -auto-approve
 
----
+👨‍💻 Maintainer & Author
 
-🔒 DevSecOps & Security Practices
-
-Credentials Isolation: Sensitive variables (terraform.tfvars) and state files (*.tfstate) are strictly excluded via .gitignore.
-
-Network Isolation: RDS MySQL databases reside entirely within isolated Private Subnets with zero public internet access.
-
-Least-Privilege Firewalls: Database Port 3306 accepts inbound connections exclusively from authorized Web Server Security Groups.
+Varla Vamsi Babu
+AWS & DevOps Infrastructure Engineer
+GitHub: @vamsijohn
