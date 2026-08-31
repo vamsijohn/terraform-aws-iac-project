@@ -9,43 +9,27 @@ An enterprise-grade Infrastructure as Code (IaC) project created and implemented
 
 ---
 
-## 📐 Architecture Overview
+## 📐 Architecture & Infrastructure Overview
 
-                      ┌────────────────────────────────────────────────────────┐
-                      │                      AWS CLOUD                         │
-                      │                                                        │
-                      │  ┌──────────────────────────────────────────────────┐  │
-                      │  │                  VPC (10.0.0.0/16)               │  │
-                      │  │                                                  │  │
-                      │  │   ┌───────────────────────────────────────────┐  │  │
-                      │  │   │        Public Subnet (10.0.1.0/24)        │  │  │
-                      │  │   │                                           │  │  │
-Internet ──[IGW]────────┼──┼──►│   [EC2 Instance] (Apache Web Server)      │  │  │
-│  │   │   • Security Group: HTTP(80), SSH(22)    │  │  │
-│  │   └─────────────────────┬─────────────────────┘  │  │
-│  │                         │                        │  │
-│  │                         ▼                        │  │
-│  │   ┌───────────────────────────────────────────┐  │  │
-│  │   │  Private Subnets (10.0.2.0 & 10.0.3.0)   │  │  │
-│  │   │                                           │  │  │
-│  │   │   [RDS Database] (MySQL 8.0 Engine)      │  │  │
-│  │   │   • Security Group: Restricted to EC2 SG  │  │  │
-│  │   └───────────────────────────────────────────┘  │  │
-│  └──────────────────────────────────────────────────┘  │
-│                                                        │
-│   [S3 Bucket] (Object Storage with Dynamic Prefix)     │
-└────────────────────────────────────────────────────────┘
-
+| Layer | AWS Component | Configuration Details | Security & Access |
+| :--- | :--- | :--- | :--- |
+| **Network** | Custom VPC | `10.0.0.0/16` CIDR Block | Internet Gateway & Custom Route Tables |
+| **Public Subnet** | Compute Subnet | `10.0.1.0/24` (AZ-a) | Public IP enabled for Web Access |
+| **Private Subnet 1** | Database Subnet A | `10.0.2.0/24` (AZ-a) | Isolated Network (No direct IGW access) |
+| **Private Subnet 2** | Database Subnet B | `10.0.3.0/24` (AZ-b) | High-Availability Subnet Group setup |
+| **Compute Tier** | AWS EC2 Instance | Amazon Linux 2023 (`t2.micro`) | Inbound HTTP (80) & SSH (22) Access |
+| **Database Tier** | AWS RDS Instance | MySQL 8.0 Engine (`db.t3.micro`) | Restricted exclusively to Web Server SG |
+| **Storage Tier** | AWS S3 Bucket | Dynamic Prefix Naming Strategy | Object Storage for Deployment Artifacts |
 
 ---
 
-## ⚡ Core Components Implemented
+## ⚡ Core Highlights Implemented
 
 * **VPC Networking**: Custom VPC equipped with Internet Gateway (IGW) and explicit Route Tables for public subnet routing.
-* **Compute Tier**: Amazon Linux 2023 EC2 Instance pre-configured with Apache Web Server via automated shell bootstrapping (`user_data`).
-* **Database Tier**: AWS RDS MySQL instance deployed in high-availability across multiple Availability Zones using `aws_db_subnet_group`.
-* **Storage Tier**: AWS S3 Bucket created with dynamic prefixing to prevent global naming conflicts.
-* **Network Security**: Strict Security Group isolation ensuring database accessibility is limited exclusively to web-tier instances.
+* **Compute Provisioning**: Amazon Linux 2023 EC2 Instance pre-configured with Apache Web Server via automated shell bootstrapping (`user_data`).
+* **Multi-AZ Database**: AWS RDS MySQL instance deployed in high-availability across multiple Availability Zones using `aws_db_subnet_group`.
+* **Dynamic Storage**: AWS S3 Bucket created with dynamic prefixing to prevent global naming conflicts.
+* **DevSecOps Security**: Strict Security Group isolation ensuring database port 3306 is reachable only via the Web Tier SG.
 
 ---
 
@@ -59,10 +43,10 @@ Internet ──[IGW]────────┼──┼──►│   [EC2 Inst
 ├── terraform.tfvars  # Local credentials file (Protected & Git-Ignored)
 └── .gitignore       # Excludes sensitive files and local state artifacts
 
-
+---
 
 📑 Declarative Code Blueprint
-Terraform
+
 variable "aws_region" {
   default     = "ap-south-1"
   type        = string
@@ -74,9 +58,7 @@ variable "db_password" {
   type        = string
   sensitive   = true
 }
-
----
-
+Terraform
 output "ec2_public_ip" {
   description = "Public IP Address assigned to Web Server"
   value       = aws_instance.web_server.public_ip
@@ -270,26 +252,28 @@ resource "aws_db_instance" "default" {
 
 🛠 Deployment Lifecycle Commands
 
-1.Initialize Working Directory
-terraform init — Downloads and installs the HashiCorp AWS provider dependencies.
+# 1. Initialize Working Directory
+terraform init
 
-2.Syntactical Validation
-terraform validate & terraform fmt — Verifies HCL syntax accuracy and enforces standard coding format conventions.
+# 2. Syntactical Validation & Formatting
+terraform validate
+terraform fmt
 
-3.Spec Execution Preview
-terraform plan — Generates a visual execution blueprint outlining targeted resource modifications.
+# 3. Execution Plan Preview
+terraform plan
 
-4.Automated Provisioning
-terraform apply — Deploys all network, compute, database, and storage assets directly into AWS.
+# 4. Automated Provisioning
+terraform apply -auto-approve
 
-5.Infrastructure De-provisioning
-terraform destroy — Safely eliminates all created cloud infrastructure to prevent ongoing resource charges.
+# 5. Infrastructure Teardown
+terraform destroy -auto-approve
 
 ---
 
-🔒 DevSecOps & Security Best Practices
-1.Credentials Isolation: All sensitive credentials (terraform.tfvars) and state files (*.tfstate) are excluded from version control using strict .gitignore rules.
+🔒 DevSecOps & Security Practices
 
-2.Network Segmentation: RDS MySQL databases reside entirely within isolated Private Subnets with zero public exposure.
+Credentials Isolation: Sensitive variables (terraform.tfvars) and state files (*.tfstate) are strictly excluded via .gitignore.
 
-3.Least-Privilege Security Rules: Database port 3306 accepts connections solely from authorized Web Server Security Groups.
+Network Isolation: RDS MySQL databases reside entirely within isolated Private Subnets with zero public internet access.
+
+Least-Privilege Firewalls: Database Port 3306 accepts inbound connections exclusively from authorized Web Server Security Groups.
